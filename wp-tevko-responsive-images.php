@@ -221,7 +221,7 @@ function tevkori_get_srcset_array( $id, $size = 'thumbnail' ) {
 		}
 	}
 
-	if ( count( $arr ) <== 1 ) {
+	if ( count( $arr ) <= 1 ) {
 		return false;
 	}
 
