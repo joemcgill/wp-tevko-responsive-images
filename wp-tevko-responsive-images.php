@@ -18,9 +18,6 @@
 // Don't load the plugin directly
 defined( 'ABSPATH' ) or die( "No script kiddies please!" );
 
-// List includes
-require_once( plugin_dir_path( __FILE__ ) . 'class-srcset-callback.php' );
-
 if ( class_exists( 'Imagick' ) ) {
 	require_once( plugin_dir_path( __FILE__ ) . 'class-respimg.php' );
 	require_once( plugin_dir_path( __FILE__ ) . 'class-wp-image-editor-respimg.php' );
