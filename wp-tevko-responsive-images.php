@@ -311,40 +311,58 @@ function tevkori_filter_content_images( $content ) {
 	$uploads_dir = wp_upload_dir();
 	$path_to_upload_dir = $uploads_dir['baseurl'];
 
-	$content = preg_replace_callback( '|<img [^>]+' . $path_to_upload_dir . '[^>]+>|', '_tevkori_filter_content_images_callback', $content );
+	$content = preg_replace_callback( '|<img ([^>]+' . $path_to_upload_dir . '[^>]+) />|', '_tevkori_filter_content_images_callback', $content );
 
 	return $content;
 }
 add_filter( 'the_content', 'tevkori_filter_content_images', 5, 1 );
 
 function _tevkori_filter_content_images_callback( $image ) {
-	$image_html = $image[0];
+	list( $image_html, $atts ) = $image;
 	$id = $size = false;
 
-	// Attempt to get the id and size from the class attribute first.
-	if ( preg_match( '/<img ([^>]+wp-image-([\d]+) size-([^\s|"]+)?[^>]+)>/', $image_html, $matches ) ) {
-		list( $image, $atts, $id, $size ) = $matches;
-	// If not, try getting an ID and size by parsing the `src` value.
-	} elseif ( preg_match( '/<img ([^>]+src="([^"]+)"[^>]+)>/i', $image_html, $url_matches ) ) {
+	// Grab ID and size info from core classes.
+	if ( preg_match( '/wp-image-([0-9]+)/i', $atts, $class_id ) ) {
+		$id = $class_id[1];
+	}
+	if ( preg_match( '/size-([^\s|"]+)/i', $atts, $class_size ) ) {
+		$size = $class_size[1];
+	}
 
-		list( $image, $atts, $url ) = $url_matches;
+	if ( $id && false === $size ) {
+		preg_match( '/width="([0-9]+)"/', $atts, $width );
+		preg_match( '/height="([0-9]+)"/', $atts, $height );
 
-		$image_filename = basename( $url );
+		$size = array(
+			(int) $width[1],
+			(int) $height[1]
+		);
+	}
+
+	// If attempts to get values for `id` and `size` failed, use the
+	// src to query for matching values in `_wp_attachment_metadata`
+	if ( false === $id || false === $size ) {
+		preg_match( '/src="([^"]+)"/', $atts, $url );
+
+		if ( ! $url[1] ) {
+			return $image_html;
+		}
+
+		$image_filename = basename( $url[1] );
 
 		// Query the DB to get the post id and meta values for any attachment
 		// containing the file name of our url.
 		global $wpdb;
-		$sql = $wpdb->prepare(
-			"SELECT `post_id`, `meta_value` FROM `wp_postmeta` WHERE `meta_key` = '_wp_attachment_metadata' AND `meta_value` LIKE %s",
+		$meta_object = $wpdb->get_row( $wpdb->prepare(
+			"SELECT `post_id`, `meta_value` FROM $wpdb->postmeta WHERE `meta_key` = '_wp_attachment_metadata' AND `meta_value` LIKE %s",
 			'%' . $image_filename . '%'
-		);
-		$meta_object = $wpdb->get_results( $sql );
+		) );
 
 		// If the query is successful, we can determine the ID and size.
-		if ( $meta_object ) {
-			$id = $meta_object[0]->post_id;
+		if ( is_object( $meta_object ) ) {
+			$id = $meta_object->post_id;
 			// Unserialize the meta_value returned in our query.
-			$meta = maybe_unserialize( $meta_object[0]->meta_value );
+			$meta = maybe_unserialize( $meta_object->meta_value );
 
 			// If the file name is the full size image, just use that.
 			if ( $image_filename === basename( $meta['file'] ) ) {
@@ -365,7 +383,7 @@ function _tevkori_filter_content_images_callback( $image ) {
 	// If we have an ID and size, try for srcset and sizes and update the markup.
 	if ( $id && $size && $srcset = tevkori_get_srcset_string( $id, $size ) ) {
 		$sizes = tevkori_get_sizes_string( $id, $size );
-		$image_html = "<img " . $atts . " " . $srcset . " " . $sizes . ">";
+		$image_html = "<img " . $atts . " " . $srcset . " " . $sizes . " />";
 	};
 
 	return $image_html;
