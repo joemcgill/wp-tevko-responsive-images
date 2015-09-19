@@ -318,6 +318,10 @@ function tevkori_filter_content_images( $content ) {
 add_filter( 'the_content', 'tevkori_filter_content_images', 5, 1 );
 
 function _tevkori_filter_content_images_callback( $image ) {
+	if ( empty( $image ) ) {
+		return false;
+	}
+
 	list( $image_html, $atts ) = $image;
 	$id = $size = false;
 
