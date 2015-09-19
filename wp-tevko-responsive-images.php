@@ -364,29 +364,43 @@ function _tevkori_filter_content_images_callback( $image ) {
 		$image_filename = basename( $url[1] );
 
 		/*
-		 * Query the DB to get the post id and meta values for any attachment
-		 * containing the file name of our url.
+		 * If we already have an ID, we use it to get the attachment metadata
+		 * using `wp_get_attachment_metadata()`. Otherwise, we'll use the image
+		 * `src` url to query the postmeta table for both the attachement ID and
+		 * metadata, which we'll use later to get the size.
 		 */
-		global $wpdb;
-		$meta_object = $wpdb->get_row( $wpdb->prepare(
-			"SELECT `post_id`, `meta_value` FROM $wpdb->postmeta WHERE `meta_key` = '_wp_attachment_metadata' AND `meta_value` LIKE %s",
-			'%' . $image_filename . '%'
-		) );
+		if ( ! empty( $id ) ) {
+			$meta = wp_get_attachment_metadata( $id );
+		} else {
+			global $wpdb;
+			$meta_object = $wpdb->get_row( $wpdb->prepare(
+				"SELECT `post_id`, `meta_value` FROM $wpdb->postmeta WHERE `meta_key` = '_wp_attachment_metadata' AND `meta_value` LIKE %s",
+				'%' . $image_filename . '%'
+			) );
 
-		// If the query is successful, we can determine the ID and size.
-		if ( is_object( $meta_object ) ) {
-			$id = $meta_object->post_id;
-			// Unserialize the meta_value returned in our query.
-			$meta = maybe_unserialize( $meta_object->meta_value );
+			// If the query is successful, we can determine the ID and size.
+			if ( is_object( $meta_object ) ) {
+				$id = $meta_object->post_id;
+				// Unserialize the meta_value returned in our query.
+				$meta = maybe_unserialize( $meta_object->meta_value );
+			} else {
+				$meta = false;
+			}
+		}
 
-			// If the file name is the full size image, just use that.
+		/*
+		 * Now that we have the attachment ID and metadata, we can retrieve the
+		 * size by matching the original image's `src` filename with the sizes
+		 * included in the attachment metadata.
+		 */
+		if ( $id && $meta ) {
+			/*
+			 * First, see if the file is the full size image. If not, we loop through
+			 * the itermediate sizes until we find a match.
+			 */
 			if ( $image_filename === basename( $meta['file'] ) ) {
 				$size = 'full';
 			} else {
-				/*
-				 * Otherwise, we loop through the sizes until we find the one whose
-				 * file name matches the file name of our image.
-				 */
 				foreach( $meta['sizes'] as $image_size => $image_size_data ) {
 					if ( $image_filename === $image_size_data['file'] ) {
 						$size = $image_size;
