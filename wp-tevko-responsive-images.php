@@ -312,7 +312,7 @@ function tevkori_filter_content_images( $content ) {
 	$uploads_dir = wp_upload_dir();
 	$path_to_upload_dir = $uploads_dir['baseurl'];
 
-	$content = preg_replace_callback( '|<img ([^>]+' . $path_to_upload_dir . '[^>]+) />|', '_tevkori_filter_content_images_callback', $content );
+	$content = preg_replace_callback( '|<img ([^>]+' . $path_to_upload_dir . '[^>]+)[\s?][\/?]>|i', '_tevkori_filter_content_images_callback', $content );
 
 	return $content;
 }
