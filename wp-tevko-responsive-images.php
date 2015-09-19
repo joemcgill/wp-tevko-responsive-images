@@ -308,7 +308,7 @@ function tevkori_get_src_sizes( $id, $size = 'thumbnail' ) {
  * @return string Converted content with `srcset` and `sizes` added to images.
  */
 function tevkori_filter_content_images( $content ) {
-	// Only match images in our uploads directory
+	// Only match images in our uploads directory.
 	$uploads_dir = wp_upload_dir();
 	$path_to_upload_dir = $uploads_dir['baseurl'];
 
@@ -350,8 +350,10 @@ function _tevkori_filter_content_images_callback( $image ) {
 		);
 	}
 
-	// If attempts to get values for `id` and `size` failed, use the
-	// src to query for matching values in `_wp_attachment_metadata`
+	/*
+	 * If attempts to get values for `id` and `size` failed, use the
+	 * src to query for matching values in `_wp_attachment_metadata`
+	 */
 	if ( false === $id || false === $size ) {
 		preg_match( '/src="([^"]+)"/', $atts, $url );
 
@@ -361,8 +363,10 @@ function _tevkori_filter_content_images_callback( $image ) {
 
 		$image_filename = basename( $url[1] );
 
-		// Query the DB to get the post id and meta values for any attachment
-		// containing the file name of our url.
+		/*
+		 * Query the DB to get the post id and meta values for any attachment
+		 * containing the file name of our url.
+		 */
 		global $wpdb;
 		$meta_object = $wpdb->get_row( $wpdb->prepare(
 			"SELECT `post_id`, `meta_value` FROM $wpdb->postmeta WHERE `meta_key` = '_wp_attachment_metadata' AND `meta_value` LIKE %s",
@@ -379,8 +383,10 @@ function _tevkori_filter_content_images_callback( $image ) {
 			if ( $image_filename === basename( $meta['file'] ) ) {
 				$size = 'full';
 			} else {
-				// Otherwise, we loop through the sizes until we find the one whose
-				// file name matches the file name of our image.
+				/*
+				 * Otherwise, we loop through the sizes until we find the one whose
+				 * file name matches the file name of our image.
+				 */
 				foreach( $meta['sizes'] as $image_size => $image_size_data ) {
 					if ( $image_filename === $image_size_data['file'] ) {
 						$size = $image_size;
