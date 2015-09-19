@@ -334,7 +334,7 @@ function _tevkori_filter_content_images_callback( $image ) {
 
 	// Grab ID and size info from core classes.
 	if ( preg_match( '/wp-image-([0-9]+)/i', $atts, $class_id ) ) {
-		$id = $class_id[1];
+		(int) $id = $class_id[1];
 	}
 	if ( preg_match( '/size-([^\s|"]+)/i', $atts, $class_size ) ) {
 		$size = $class_size[1];
