@@ -333,6 +333,11 @@ function _tevkori_filter_content_images_callback( $image ) {
 	list( $image_html, $atts ) = $image;
 	$id = $size = false;
 
+	// Bail early if a `srcset` attribute already exists.
+	if ( false !== strpos( $atts, 'srcset=' ) ) {
+		return $image_html;
+	}
+
 	// Grab ID and size info from core classes.
 	if ( preg_match( '/wp-image-([0-9]+)/i', $atts, $class_id ) ) {
 		(int) $id = $class_id[1];
