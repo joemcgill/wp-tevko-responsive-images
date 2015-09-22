@@ -424,4 +424,20 @@ class SampleTest extends WP_UnitTestCase {
 
 		$this->assertSame( $content_filtered, tevkori_filter_content_images( $content_unfiltered ) );
 	}
+
+	/**
+	 * @group 170
+	 */
+	function test_tevkori_filter_content_images_with_preexisting_srcset() {
+		// Make image.
+		$id = $this->_test_img();
+
+		// Generate HTML and add a dummy srcset attribute.
+		$image_html = get_image_tag( $id, '', '', '', 'medium' );
+		$image_html = preg_replace('|<img ([^>]+) />|', '<img $1 ' . 'srcset="image2x.jpg 2x" />', $image_html );
+
+		// The content filter should return the image unchanged.
+		$this->assertSame( $image_html, tevkori_filter_content_images( $image_html ) );
+	}
+
 }
