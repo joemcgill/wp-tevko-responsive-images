@@ -383,21 +383,31 @@ class SampleTest extends WP_UnitTestCase {
 
 		// Function used to build HTML for the editor.
 		$img = get_image_tag( $id, '', '', '', 'medium' );
+		$img_no_size = str_replace( 'size-', '', $img );
+		$img_no_size_id = str_replace( 'wp-attachment-', '', $img_no_size );
 
 		// Manually add srcset and sizes to the markup from get_image_tag();
 		$respimg = preg_replace('|<img ([^>]+) />|', '<img $1 ' . $srcset . ' ' . $sizes . ' />', $img);
+		$respimg_no_size = preg_replace('|<img ([^>]+) />|', '<img $1 ' . $srcset . ' ' . $sizes . ' />', $img_no_size);
+		$respimg_no_size_id = preg_replace('|<img ([^>]+) />|', '<img $1 ' . $srcset . ' ' . $sizes . ' />', $img_no_size_id);
 
 		$content = '<p>Welcome to WordPress!  This post contains important information.  After you read it, you can make it private to hide it from visitors but still have the information handy for future reference.</p>
 			<p>First things first:</p>
+
+			%1$s
+
 			<ul>
 			<li><a href="http://wordpress.org" title="Subscribe to the WordPress mailing list for Release Notifications">Subscribe to the WordPress mailing list for release notifications</a></li>
 			</ul>
 
-			%1$s
+			%2$s
 
 			<p>As a subscriber, you will receive an email every time an update is available (and only then).  This will make it easier to keep your site up to date, and secure from evildoers.<br />
 			When a new version is released, <a href="http://wordpress.org" title="If you are already logged in, this will take you directly to the Dashboard">log in to the Dashboard</a> and follow the instructions.<br />
 			Upgrading is a couple of clicks!</p>
+
+			%3$s
+
 			<p>Then you can start enjoying the WordPress experience:</p>
 			<ul>
 			<li>Edit your personal information at <a href="http://wordpress.org" title="Edit settings like your password, your display name and your contact information">Users &#8250; Your Profile</a></li>
@@ -409,8 +419,8 @@ class SampleTest extends WP_UnitTestCase {
 			<li>Find answers to your questions at the <a href="http://wordpress.orgs" title="The official WordPress documentation, maintained by the WordPress community">WordPress Codex</a></li>
 			</ul>';
 
-		$content_unfiltered = sprintf( $content, $img );
-		$content_filtered = sprintf( $content, $respimg );
+		$content_unfiltered = sprintf( $content, $img, $img_no_size, $img_no_size_id );
+		$content_filtered = sprintf( $content, $respimg, $respimg_no_size, $respimg_no_size_id );
 
 		$this->assertSame( $content_filtered, tevkori_filter_content_images( $content_unfiltered ) );
 	}
