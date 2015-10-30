@@ -223,20 +223,9 @@ class SampleTest extends WP_UnitTestCase {
 	function test_tevkori_get_srcset_array_random_size_name() {
 		// make an image
 		$id = $this->_test_img();
-		$sizes = tevkori_get_srcset_array( $id, 'foo' );
+		$srcset = tevkori_get_srcset_array( $id, 'foo' );
 
-		$year_month = date('Y/m');
-		$image = wp_get_attachment_metadata( $id );
-
-		$expected = array(
-			$image['sizes']['medium']['width'] => 'http://example.org/wp-content/uploads/' . $year_month = date('Y/m') . '/'
-				. $image['sizes']['medium']['file'] . ' ' . $image['sizes']['medium']['width'] . 'w',
-			$image['sizes']['large']['width'] => 'http://example.org/wp-content/uploads/' . $year_month = date('Y/m') . '/'
-				. $image['sizes']['large']['file'] . ' ' . $image['sizes']['large']['width'] . 'w',
-			$image['width'] => 'http://example.org/wp-content/uploads/' . $image['file'] . ' ' . $image['width'] .'w'
-		);
-
-		$this->assertSame( $expected, $sizes );
+		$this->assertSame( false, $srcset );
 	}
 
 	/**
