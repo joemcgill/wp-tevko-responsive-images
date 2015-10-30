@@ -163,11 +163,16 @@ function wp_get_attachment_image_srcset( $attachment_id, $size = 'medium', $imag
 
 	// Get the width and height of the image.
 	if ( is_array( $size ) ) {
-		$size_array = $size;
+		$size_array   = $size;
 		$image_width  = absint( $size[0] );
 		$image_height = absint( $size[1] );
 	} elseif ( is_string( $size ) ) {
-		$size_array   = _wp_get_image_size_from_meta( $size, $image_meta );
+		$size_array = _wp_get_image_size_from_meta( $size, $image_meta );
+
+		if ( ! $size_array ) {
+			return false;
+		}
+
 		$image_width  = $size_array[0];
 		$image_height = $size_array[1];
 	} else {
@@ -192,7 +197,7 @@ function wp_get_attachment_image_srcset( $attachment_id, $size = 'medium', $imag
 
 	// Get the image URL if it's not passed as argument.
 	if ( ! $image_url ) {
-		$image = wp_get_attachment_image_src( $attachment_id, $size );
+		$image = wp_get_attachment_image_src( $attachment_id, $size_array );
 
 		if ( ! $image ) {
 			return false;
