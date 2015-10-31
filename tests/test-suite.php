@@ -8,11 +8,40 @@ class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 
 	public static function wpSetUpBeforeClass( $factory ) {
 		self::$test_file_name = dirname(__FILE__) . '/data/test-large.png';
-		self::$large_id = $factory->attachment->create_upload_object( self::$test_file_name );
+		self::$large_id = self::create_upload_object( self::$test_file_name );
 	}
 
 	public static function wpTearDownAfterClass() {
 		wp_delete_attachment( self::$large_id );
+	}
+
+	private function create_upload_object( $filename, $parent = 0 ) {
+		$contents = file_get_contents($file);
+		$upload = wp_upload_bits(basename($file), null, $contents);
+
+		$type = '';
+		if ( ! empty($upload['type']) ) {
+			$type = $upload['type'];
+		} else {
+			$mime = wp_check_filetype( $upload['file'] );
+			if ($mime)
+				$type = $mime['type'];
+		}
+
+		$attachment = array(
+			'post_title' => basename( $upload['file'] ),
+			'post_content' => '',
+			'post_type' => 'attachment',
+			'post_parent' => $parent,
+			'post_mime_type' => $type,
+			'guid' => $upload[ 'url' ],
+		);
+
+		// Save the data
+		$id = wp_insert_attachment( $attachment, $upload[ 'file' ], $parent );
+		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $upload['file'] ) );
+
+		return $id;
 	}
 
 	/* OUR TESTS */
@@ -193,7 +222,7 @@ class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 		update_option( 'uploads_use_yearmonth_folders', 0 );
 
 		// make an image
-		$id = self::factory()->attachment->create_upload_object( self::$test_file_name );
+		$id = self::create_upload_object( self::$test_file_name );
 		$sizes = tevkori_get_srcset_array( $id, 'medium' );
 
 		$image = wp_get_attachment_metadata( $id );
@@ -355,7 +384,7 @@ class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 	 */
 	function test_tevkori_filter_attachment_image_attributes_thumbnails() {
 		// Make image.
-		$id = self::factory()->attachment->create_upload_object( self::$test_file_name );
+		$id = self::create_upload_object( self::$test_file_name );
 
 		// Get attachment post data.
 		$attachment = get_post( $id );
