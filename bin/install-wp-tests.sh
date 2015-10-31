@@ -22,7 +22,9 @@ download() {
     fi
 }
 
-if [[ $WP_VERSION =~ [0-9]+\.[0-9]+(\.[0-9]+)? ]]; then
+if [[ $WP_VERSION =~ [4.4]+(\.[.]+)? ]]; then
+	WP_TESTS_TAG="trunk"
+elif [[ $WP_VERSION =~ [0-9]+\.[0-9]+(\.[0-9]+)? ]]; then
 	WP_TESTS_TAG="tags/$WP_VERSION"
 else
 	# http serves a single offer, whereas https serves multiple. we only want one
