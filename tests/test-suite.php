@@ -1,64 +1,18 @@
 <?php
 
-class SampleTest extends WP_UnitTestCase {
+class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 
-	function tearDown() {
-		// Remove all uploads.
-		$this->remove_added_uploads();
-		parent::tearDown();
+	protected static $large_id;
+
+	protected static $test_file_name;
+
+	public static function wpSetUpBeforeClass( $factory ) {
+		self::$test_file_name = dirname(__FILE__) . '/data/test-large.png';
+		self::$large_id = $factory->attachment->create_upload_object( self::$test_file_name );
 	}
 
-	/**
-	 * Helper function that creates an attachment in the DB.
-	 * Copied from Tests_Post_Attachments Class in the WP Core test suite.
-	 */
-	private function _make_attachment( $upload, $parent_post_id = 0 ) {
-
-		$type = '';
-		if ( !empty($upload['type']) ) {
-			$type = $upload['type'];
-		} else {
-			$mime = wp_check_filetype( $upload['file'] );
-			if ($mime)
-				$type = $mime['type'];
-		}
-
-		$attachment = array(
-			'post_title' => basename( $upload['file'] ),
-			'post_content' => '',
-			'post_type' => 'attachment',
-			'post_parent' => $parent_post_id,
-			'post_mime_type' => $type,
-			'guid' => $upload[ 'url' ],
-		);
-
-		// Save the data
-		$id = wp_insert_attachment( $attachment, $upload[ 'file' ], $parent_post_id );
-		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $upload['file'] ) );
-
-		return $this->ids[] = $id;
-
-	}
-
-	/**
-	 * Helper function to create an attachment from a file
-	 *
-	 * @uses _make_attachment
-	 *
-	 * @param 	string 			Optional. A path to a file. Default: DIR_TESTDATA.'/images/canola.JPG'.
-	 * @return 	int|bool 		An attachment ID or false.
-	 */
-	private function _test_img( $file = null ) {
-
-		$filename = $file ? $file : ( dirname(__FILE__) . '/data/test-large.png' );
-		$contents = file_get_contents($filename);
-
-		$upload = wp_upload_bits(basename($filename), null, $contents);
-		$this->assertTrue( empty($upload['error']) );
-
-		$id = $this->_make_attachment($upload);
-
-		return $id;
+	public static function wpTearDownAfterClass() {
+		wp_delete_attachment( self::$large_id );
 	}
 
 	/* OUR TESTS */
@@ -68,7 +22,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_sizes() {
 		// make an image
-		$id = $this->_test_img();
+		$id = self::$large_id;
 
 		global $content_width;
 
@@ -95,7 +49,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_sizes_with_args() {
 		// make an image
-		$id = $this->_test_img();
+		$id = self::$large_id;
 
 		$args = array(
 			'sizes' => array(
@@ -129,7 +83,7 @@ class SampleTest extends WP_UnitTestCase {
 		add_filter( 'tevkori_image_sizes_args', array( $this, '_test_tevkori_image_sizes_args' ) );
 
 		// Set up our test.
-		$id = $this->_test_img();
+		$id = self::$large_id;
 		$sizes = tevkori_get_sizes($id, 'medium');
 
 		// Evaluate that the sizes returned is what we expected.
@@ -154,7 +108,7 @@ class SampleTest extends WP_UnitTestCase {
 		add_filter( 'tevkori_srcset_array', array( $this, '_test_tevkori_srcset_array' ) );
 
 		// Set up our test.
-		$id = $this->_test_img();
+		$id = self::$large_id;
 		$sizes = tevkori_get_srcset_array($id, 'medium');
 
 		// Evaluate that the sizes returned is what we expected.
@@ -185,7 +139,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_sizes_string() {
 		// make an image
-		$id = $this->_test_img();
+		$id = self::$large_id;
 
 		$sizes = tevkori_get_sizes($id, 'medium');
 		$sizes_string = tevkori_get_sizes_string( $id, 'medium' );
@@ -200,7 +154,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_srcset_array() {
 		// make an image
-		$id = $this->_test_img();
+		$id = self::$large_id;
 		$sizes = tevkori_get_srcset_array( $id, 'medium' );
 
 		$year_month = date('Y/m');
@@ -222,7 +176,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_srcset_array_random_size_name() {
 		// make an image
-		$id = $this->_test_img();
+		$id = self::$large_id;
 		$srcset = tevkori_get_srcset_array( $id, 'foo' );
 
 		$this->assertSame( false, $srcset );
@@ -239,7 +193,7 @@ class SampleTest extends WP_UnitTestCase {
 		update_option( 'uploads_use_yearmonth_folders', 0 );
 
 		// make an image
-		$id = $this->_test_img();
+		$id = self::factory()->attachment->create_upload_object( self::$test_file_name );
 		$sizes = tevkori_get_srcset_array( $id, 'medium' );
 
 		$image = wp_get_attachment_metadata( $id );
@@ -262,7 +216,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_srcset_single_srcset() {
 		// make an image
-		$id = $this->_test_img();
+		$id = self::$large_id;
 		// In our tests, thumbnails would only return a single srcset candidate,
 		// in which case we don't bother returning a srcset array.
 		$sizes = tevkori_get_srcset( $id, 'thumbnail' );
@@ -278,7 +232,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_srcset_array_with_edits() {
 		// Make an image.
-		$id = $this->_test_img();
+		$id = self::$large_id;
 
 		// For this test we're going to mock metadata changes from an edit.
 		// Start by getting the attachment metadata.
@@ -312,7 +266,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_srcset_array_false() {
 		// make an image
-		$id = $this->_test_img();
+		$id = self::$large_id;
 		$sizes = tevkori_get_srcset_array( 99999, 'foo' );
 
 		// For canola.jpg we should return
@@ -327,7 +281,7 @@ class SampleTest extends WP_UnitTestCase {
 		add_filter( 'wp_generate_attachment_metadata', array( $this, '_test_tevkori_get_srcset_array_no_width_filter' ) );
 
 		// Make our attachement.
-		$id = $this->_test_img();
+		$id = self::$large_id;
 		$srcset = tevkori_get_srcset_array( $id, 'medium' );
 
 		// The srcset should be false
@@ -351,7 +305,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_srcset_string() {
 		// make an image
-		$id = $this->_test_img();
+		$id = self::$large_id;
 		$sizes = tevkori_get_srcset_string( $id, 'full' );
 
 		$image = wp_get_attachment_metadata( $id );
@@ -369,10 +323,11 @@ class SampleTest extends WP_UnitTestCase {
 
 	/**
 	 * @group 159
+	 * @expectedDeprecated tevkori_filter_attachment_image_attributes
 	 */
 	function test_tevkori_filter_attachment_image_attributes() {
 		// Make image.
-		$id = $this->_test_img();
+		$id = self::$large_id;
 
 		// Get attachment post data.
 		$attachment = get_post( $id );
@@ -396,10 +351,11 @@ class SampleTest extends WP_UnitTestCase {
 
 	/**
 	 * @group 159
+	 * @expectedDeprecated tevkori_filter_attachment_image_attributes
 	 */
 	function test_tevkori_filter_attachment_image_attributes_thumbnails() {
 		// Make image.
-		$id = $this->_test_img();
+		$id = self::factory()->attachment->create_upload_object( self::$test_file_name );
 
 		// Get attachment post data.
 		$attachment = get_post( $id );
@@ -429,7 +385,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_filter_content_images() {
 		// Make image.
-		$id = $this->_test_img();
+		$id = self::$large_id;
 
 		$srcset = tevkori_get_srcset_string( $id, 'medium' );
 		$sizes = tevkori_get_sizes_string( $id, 'medium' );
@@ -483,7 +439,7 @@ class SampleTest extends WP_UnitTestCase {
 	 */
 	function test_tevkori_filter_content_images_with_preexisting_srcset() {
 		// Make image.
-		$id = $this->_test_img();
+		$id = self::$large_id;
 
 		// Generate HTML and add a dummy srcset attribute.
 		$image_html = get_image_tag( $id, '', '', '', 'medium' );

@@ -117,6 +117,7 @@ function tevkori_get_sizes( $id, $size = 'medium', $args = null ) {
 	_deprecated_function( __FUNCTION__, '3.0.0', 'wp_get_attachment_image_sizes()' );
 
 	if ( $args || has_filter( 'tevkori_image_sizes_args' ) ) {
+
 		// Try to get the image width from '$args' first.
 		if ( is_array( $args ) && ! empty( $args['width'] ) ) {
 			$img_width = (int) $args['width'];
@@ -267,3 +268,16 @@ function tevkori_img_add_srcset_and_sizes( $image ) {
 	_deprecated_function( __FUNCTION__, '3.0.0', 'wp_image_add_srcset_and_sizes()' );
 	return wp_image_add_srcset_and_sizes( $image );
 }
+
+/**
+ * Filter to add 'srcset' and 'sizes' attributes to post thumbnails and gallery images.
+ *
+ * @see 'wp_get_attachment_image_attributes'
+ * @return array Attributes for image.
+ */
+function tevkori_filter_attachment_image_attributes( $attr, $attachment, $size ) {
+	_deprecated_function( __FUNCTION__, '3.0.0' );
+
+	return $attr;
+}
+add_filter( 'wp_get_attachment_image_attributes', 'tevkori_filter_attachment_image_attributes', 0, 3 );
