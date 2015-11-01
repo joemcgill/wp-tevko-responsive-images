@@ -272,12 +272,12 @@ if ( ! function_exists( 'wp_get_attachment_image_sizes' ) ) :
  *
  * @param array|string $size          Image size. Accepts any valid image size name, or an array of
  *                                    width and height values in pixels (in that order). Default 'medium'.
+ * @param array        $image_meta    Optional. The image meta data as returned by 'wp_get_attachment_metadata()'.
  * @param int          $attachment_id Optional. Image attachment ID. Required if `$size` is an image size name
  *                                    and `$image_meta` is omited. Otherwise used to pass to the filter.
- * @param array        $image_meta    Optional. The image meta data as returned by 'wp_get_attachment_metadata()'.
  * @return string|bool A string of size values for use as value in a 'sizes' attribute or false.
  */
-function wp_get_attachment_image_sizes( $size = 'medium', $attachment_id = 0, $image_meta = null ) {
+function wp_get_attachment_image_sizes( $size = 'medium', $image_meta = null, $attachment_id = 0 ) {
 	$width = 0;
 
 	if ( is_array( $size ) ) {
@@ -436,7 +436,7 @@ if ( ! function_exists( 'wp_image_add_srcset_and_sizes' ) ) :
 
 	// Get the 'srcset' and 'sizes' values.
 	$srcset = wp_get_attachment_image_srcset( $attachment_id, $size_array, $image_url, $image_meta );
-	$sizes  = wp_get_attachment_image_sizes( $size_array, $attachment_id, $image_meta );
+	$sizes  = wp_get_attachment_image_sizes( $size_array, $image_meta, $attachment_id );
 
 	if ( $srcset && $sizes ) {
 		// Format the 'srcset' and 'sizes' string and escape attributes.

@@ -58,16 +58,16 @@ class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 		// test sizes against the default WP sizes
 		$intermediates = array('thumbnail', 'medium', 'large');
 
-		foreach( $intermediates as $int ) {
-			$width = get_option( $int . '_size_w' );
+		foreach( $intermediates as $size ) {
+			$width = (int) get_option( $size . '_size_w' );
 
 			// the sizes width gets constrained to $content_width by default
-			if ( $content_width > 0 ) {
-				$width = ( $width > $content_width ) ? $content_width : $width;
-			}
+			// if ( $content_width > 0 ) {
+			// 	$width = ( $width > $content_width ) ? $content_width : $width;
+			// }
 
 			$expected = '(max-width: ' . $width . 'px) 100vw, ' . $width . 'px';
-			$sizes = tevkori_get_sizes( $id, $int );
+			$sizes = tevkori_get_sizes( $id, $size );
 
 			$this->assertSame($expected, $sizes);
 		}
@@ -184,24 +184,25 @@ class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 	function test_tevkori_get_srcset_array() {
 		// make an image
 		$id = self::$large_id;
-		$sizes = tevkori_get_srcset_array( $id, 'medium' );
 
 		$year_month = date('Y/m');
 		$image = wp_get_attachment_metadata( $id );
 
-		$expected = array(
-			$image['sizes']['medium']['width'] => 'http://example.org/wp-content/uploads/' . $year_month = date('Y/m') . '/'
-				. $image['sizes']['medium']['file'] . ' ' . $image['sizes']['medium']['width'] . 'w',
-			$image['sizes']['large']['width'] => 'http://example.org/wp-content/uploads/' . $year_month = date('Y/m') . '/'
-				. $image['sizes']['large']['file'] . ' ' . $image['sizes']['large']['width'] . 'w',
-			$image['width'] => 'http://example.org/wp-content/uploads/' . $image['file'] . ' ' . $image['width'] .'w'
-		);
+		foreach( $image['sizes'] as $name => $size ) {
+			if ( in_array( $name, array( 'medium', 'medium_large', 'large' ) ) ) {
+				$expected[$size['width']] = 'http://example.org/wp-content/uploads/' . $year_month = date('Y/m') . '/' . $size['file'] . ' ' . $size['width'] . 'w';
+			}
+		}
+		$expected[$image['width']] = 'http://example.org/wp-content/uploads/' . $image['file'] . ' ' . $image['width'] .'w';
+
+		$sizes = tevkori_get_srcset_array( $id, 'medium' );
 
 		$this->assertSame( $expected, $sizes );
 	}
 
 	/**
 	 * @expectedDeprecated tevkori_get_srcset_array
+	 * @group test
 	 */
 	function test_tevkori_get_srcset_array_random_size_name() {
 		// make an image
@@ -227,11 +228,13 @@ class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 
 		$image = wp_get_attachment_metadata( $id );
 
-		$expected = array(
-			$image['sizes']['medium']['width'] => 'http://example.org/wp-content/uploads/' . $image['sizes']['medium']['file'] . ' ' . $image['sizes']['medium']['width'] . 'w',
-			$image['sizes']['large']['width'] => 'http://example.org/wp-content/uploads/' . $image['sizes']['large']['file'] . ' ' . $image['sizes']['large']['width'] . 'w',
-			$image['width'] => 'http://example.org/wp-content/uploads/' . $image['file'] . ' ' . $image['width'] .'w'
-		);
+		foreach( $image['sizes'] as $name => $size ) {
+			if ( in_array( $name, array( 'medium', 'medium_large', 'large' ) ) ) {
+				$expected[$size['width']] = 'http://example.org/wp-content/uploads/' . $size['file'] . ' ' . $size['width'] . 'w';
+			}
+		}
+		$expected[$image['width']] = 'http://example.org/wp-content/uploads/' . $image['file'] . ' ' . $image['width'] .'w';
+
 
 		$this->assertSame( $expected, $sizes );
 
@@ -307,26 +310,25 @@ class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 	 */
 	function test_tevkori_get_srcset_array_no_width() {
 		// Filter image_downsize() output.
-		add_filter( 'wp_generate_attachment_metadata', array( $this, '_test_tevkori_get_srcset_array_no_width_filter' ) );
+		add_filter( 'image_downsize', array( $this, '_filter_image_downsize' ), 10, 3 );
 
 		// Make our attachement.
-		$id = self::$large_id;
+		$id = self::create_upload_object( self::$test_file_name );
 		$srcset = tevkori_get_srcset_array( $id, 'medium' );
 
 		// The srcset should be false
 		$this->assertFalse( $srcset );
 
 		// Remove filter.
-		remove_filter( 'wp_generate_attachment_metadata', array( $this, '_test_tevkori_get_srcset_array_no_width_filter' ) );
+		remove_filter( 'image_downsize', array( $this, '_filter_image_downsize' ) );
 	}
 
 	/**
 	 * Helper funtion to filter image_downsize and return zero values for width and height.
 	 */
-	public function _test_tevkori_get_srcset_array_no_width_filter( $meta ) {
-		$meta['sizes']['medium']['width'] = 0;
-		$meta['sizes']['medium']['height'] = 0;
-		return $meta;
+	public function _filter_image_downsize( $out, $id, $size ) {
+		$img_url = wp_get_attachment_url($id);
+		return array( $img_url, 0, 0 );
 	}
 
 	/**
@@ -341,10 +343,12 @@ class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 		$year_month = date('Y/m');
 
 		$expected = 'srcset="';
-		$expected .= 'http://example.org/wp-content/uploads/' . $year_month = date('Y/m') . '/'
-			. $image['sizes']['medium']['file'] . ' ' . $image['sizes']['medium']['width'] . 'w, ';
-		$expected .='http://example.org/wp-content/uploads/' . $year_month = date('Y/m') . '/'
-			. $image['sizes']['large']['file'] . ' ' . $image['sizes']['large']['width'] . 'w, ';
+
+		foreach( $image['sizes'] as $name => $size ) {
+			if ( in_array( $name, array( 'medium', 'medium_large', 'large' ) ) ) {
+				$expected .= 'http://example.org/wp-content/uploads/' . $year_month = date('Y/m') . '/' . $size['file'] . ' ' . $size['width'] . 'w, ';
+			}
+		}
 		$expected .= 'http://example.org/wp-content/uploads/' . $image['file'] . ' ' . $image['width'] .'w"';
 
 		$this->assertSame( $expected, $sizes );

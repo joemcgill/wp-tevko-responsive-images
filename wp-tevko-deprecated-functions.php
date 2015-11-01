@@ -119,6 +119,7 @@ function tevkori_get_sizes( $id, $size = 'medium', $args = null ) {
 	if ( $args || has_filter( 'tevkori_image_sizes_args' ) ) {
 
 		// Try to get the image width from '$args' first.
+		$img_width = false;
 		if ( is_array( $args ) && ! empty( $args['width'] ) ) {
 			$img_width = (int) $args['width'];
 		} elseif ( $img = image_get_intermediate_size( $id, $size ) ) {
@@ -205,7 +206,7 @@ function tevkori_get_sizes( $id, $size = 'medium', $args = null ) {
 		// If '$size_list' is defined set the string, otherwise set false.
 		return ( $size_list ) ? $size_list : false;
 	} else {
-		return wp_get_attachment_image_sizes( $size, $id );
+		return wp_get_attachment_image_sizes( $size, null, $id );
 	}
 }
 
@@ -233,7 +234,7 @@ function tevkori_get_sizes_string( $id, $size = 'medium', $args = null ) {
 	if ( $args || has_filter( 'tevkori_image_sizes_args' ) ) {
 		$sizes = tevkori_get_sizes( $id, $size, $args );
 	} else {
-		$sizes = wp_get_attachment_image_sizes( $size, $id );
+		$sizes = wp_get_attachment_image_sizes( $size, null, $id );
 	}
 
 	return $sizes ? 'sizes="' . esc_attr( $sizes ) . '"' : false;
