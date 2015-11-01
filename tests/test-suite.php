@@ -15,9 +15,9 @@ class Test_RICG_Responsive_Images extends WP_UnitTestCase {
 		wp_delete_attachment( self::$large_id );
 	}
 
-	private function create_upload_object( $filename, $parent = 0 ) {
-		$contents = file_get_contents($file);
-		$upload = wp_upload_bits(basename($file), null, $contents);
+	public static function create_upload_object( $filename, $parent = 0 ) {
+		$contents = file_get_contents($filename);
+		$upload = wp_upload_bits(basename($filename), null, $contents);
 
 		$type = '';
 		if ( ! empty($upload['type']) ) {
